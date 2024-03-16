@@ -1,5 +1,6 @@
 import requests
 import bs4
+import sys
 import queue
 from threading import Thread
 import json
@@ -8,7 +9,7 @@ import argparse
 from pathlib import Path
 import os
 
-HEADERS = {'User-Agent':  'Mozilla/5.0 (X11; Linux x86_64; rv:104.0) Gecko/20100101 Firefox/104.0'}
+HEADERS = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:104.0) Gecko/20100101 Firefox/104.0'}
 
 BASE_URL = 'https://www.101soundboards.com'
 
@@ -45,9 +46,11 @@ def find_sounds(url):
     check_if_none(target, 'info script')
 
     target = str(target)
+    trimmedTarget = str(target[target.find('board_data_inline') + 20:target.find('}]};') + 3])
+    # print(trimmedTarget)
 
-    sound_list = json.loads(target[target.find('board_data_preload') + 21:-11])
-    #TODO: extract properties at this point
+    sound_list = json.loads(trimmedTarget)
+    # TODO: extract properties at this point
     """
         "id": 27782,
         "board_title": "LazarBeam",
@@ -72,9 +75,9 @@ def find_sounds(url):
     res = []
 
     for i in sounds:
-        #TODO: parse out metadata here as wanted (ignore key 'board', literal copy of the board object above)
-        #TODO: we only care about the key 'sound_file_url
-        #TODO: investigate keys 'download_url' and 'waveform_url'
+        # TODO: parse out metadata here as wanted (ignore key 'board', literal copy of the board object above)
+        # TODO: we only care about the key 'sound_file_url
+        # TODO: investigate keys 'download_url' and 'waveform_url'
         """
             {
             "id": 420172,
@@ -109,10 +112,12 @@ def find_sounds(url):
         res.append({
             'id': i['id'],
             'title': i['sound_transcript'],
-            'url': i['sound_file_url']
-            })
+            'url': i['sound_file_url'],
+            'dumbass_iphone_prefix_duration': i['sound_file_pitch']
+        })
 
     return res
+
 
 def download_sound(url, filepath):
     res = requests.get(BASE_URL + url, headers=HEADERS)
@@ -126,9 +131,8 @@ def download_sound(url, filepath):
 
 def handle_sound(sound, output_directory):
     print(f'[+] downloading sound \'{sound["title"]}\' with id {sound["id"]}')
-    filepath = output_directory + \
-                os.path.sep + \
-                sound['title'] + '-' + str(sound['id']) + '.mp3'
+    filename = sound['title'].replace('/', '_').replace('?', '_').replace(':', '_')
+    filepath = os.path.join(output_directory, f"{filename}-{sound['id']}.mp3")
     download_sound(sound['url'], filepath)
 
 
@@ -173,4 +177,8 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--output-directory', default='sounds')
     parser.add_argument('URL', help='soundboard url (example: "https://www.101soundboards.com/boards/27782-lazarbeam")')
     args = parser.parse_args()
-    main(args)
+    # Run the main function
+    try:
+        main(args)
+    except Exception:
+        sys.exit(1)
