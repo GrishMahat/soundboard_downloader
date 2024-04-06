@@ -1,6 +1,4 @@
-Certainly! Below is the content for your `README.md` file:
 
----
 
 # Soundboard Downloader
 
@@ -87,4 +85,3 @@ Contributions are welcome! Feel free to submit bug reports, feature requests, or
 
 This project is licensed under the [MIT License](LICENSE).
 
----
